@@ -1,0 +1,168 @@
+let a1;
+let savedMin = -1;
+//let color2 = [
+// [60, 150, 130], [192, 230, 1], [222, 202, 0], [243, 173, 0], [255, 142, 26],
+//[255, 110, 59], [255, 77, 85], [247, 46, 109], [226, 24, 132], [196, 27, 152],
+// [158, 42, 167], [110, 54, 175], [80, 84, 175]
+//];
+
+//Ring colors one color per hour (12 hours total)
+let colors = [
+  [80, 84, 175],
+  [110, 54, 175],
+  [158, 42, 167],
+  [196, 27, 152],
+  [226, 24, 132],
+  [247, 46, 109],
+  [255, 77, 85],
+  [255, 110, 59],
+  [255, 142, 26],
+  [243, 173, 0],
+  [222, 202, 0],
+  [192, 230, 1],
+  [60, 150, 130],
+];
+
+let grayscale = [
+  [0],
+  [24],
+  [48],
+  [72],
+  [96],
+  [120],
+  [144],
+  [168],
+  [192],
+  [216],
+  [230],
+  [240],
+  [255],
+];
+let grayscale2 = [
+  [255],
+  [240],
+  [230],
+  [216],
+  [192],
+  [168],
+  [144],
+  [120],
+  [96],
+  [72],
+  [48],
+  [24],
+  [0],
+];
+let h;
+
+function setup() {
+  createCanvas(700, 700);
+  angleMode(DEGREES);
+  h = hour() % 12;
+  // m = minute();
+  // s = second();
+}
+
+function draw() {
+  translate(width / 2, height / 2);
+  rotate(-90);
+
+  let totalRings = 12; // total number rings for 12 hours except for 13th ring which will measure per minute
+  let currentHour = hour() % 12; // 12-hour format (current hour)
+  let currentMinute = minute(); // current min
+  let currentSecond = second(); //current sec
+
+  console.log(
+    `It is ${nf(currentHour, 2)}:${nf(currentMinute, 2)}:${nf(
+      currentSecond,
+      2
+    )} o'clock`
+  );
+
+  //Background animation
+  let secondBackground = second() / 60; // 60 seconds per minute for background color changes
+
+  // Get the current and next color
+  let currentBackground = colors[currentMinute % colors.length];
+  let nextBackground = colors[(currentMinute + 1) % colors.length];
+
+  // Interpolate between currentBackground and nextBackground based on seconds
+  let blendedColor = lerpColor(
+    color(currentBackground),
+    color(nextBackground),
+    secondBackground
+  );
+
+  background(blendedColor);
+
+  //fill animation for 'unfilled' aka hours that haven't been started or completed yet (new/empty)
+  for (let i = totalRings - 1; i > currentHour; i--) {
+    noFill();
+    noStroke();
+    arc(0, 0, 100 + i * 50, 100 + i * 50, 0, 360);
+  }
+
+  //fill animation for hours completed (arch already reached 360/full)
+  for (let i = currentHour - 1; i >= 0; i--) {
+    fill(colors[i][0], colors[i][1], colors[i][2]);
+    stroke(255);
+    arc(0, 0, 100 + i * 50, 100 + i * 50, 0, 360); // completely filled for past hours
+  }
+
+  //arc's that are actively filling clockwise (waxing)
+  let minuteProgress = map(currentMinute, 0, 59, 0, 360);
+  fill(
+    colors[currentHour][0],
+    colors[currentHour][1],
+    colors[currentHour][2],
+    150
+  );
+  noStroke();
+  arc(0, 0, 100 + currentHour * 50, 100 + currentHour * 50, 0, minuteProgress);
+
+  // 12pm-12am reversing the rotation of the arc's fill (waning)
+  if (hour() >= 12) {
+    let reverseHour = 12 - (hour() % 12); // reverse direction of the arc's fill after 12 hours (12pm-12am) (waning)
+
+    // loop for grayscale arc animatimation from 12 pm-12am (remains the same)
+    // for (let i = totalRings - 1; i > reverseHour; i--) {
+    // noFill(0);
+    //  noStroke(255);
+    //  arc(0, 0, 100 + i * 50, 100 + i * 50, 0, 360);
+    //  }
+
+    // counterclockwise for loop for smaller rings (waning)
+    //the arc's will fill from the outter ring to the inner ring in the loop
+    //ring 13 is not included in this loop
+    for (let i = reverseHour - 1; i >= 0; i--) {
+      fill(colors[i][0], colors[i][1], colors[i][2], 100);
+      stroke(255);
+      arc(0, 0, 100 + i * 50, 100 + i * 50, 0, 360); // completely filled arcs representing past hours (full)
+    }
+
+    //arc's that are actively filling counterclockwise (waning)
+    let reverseMinuteProgress = map(currentMinute, 0, 59, 360, 0);
+    fill(
+      colors[reverseHour][0],
+      colors[reverseHour][1],
+      colors[reverseHour][2],
+      150
+    );
+    stroke(255);
+    arc(
+      0,
+      0,
+      100 + reverseHour * 50,
+      100 + reverseHour * 50,
+      0,
+      reverseMinuteProgress
+    );
+  }
+  // Draw the inner ring for current minute (13th ring)
+  //doesn't reverse
+  fill(80, 100, 240, 200);
+  stroke(255);
+  arc(0, 0, 30, 30, 0, minuteProgress * 6);
+}
+
+//console.log(360 / 24);
